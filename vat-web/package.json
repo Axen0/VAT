@@ -1,0 +1,19 @@
+{
+  "name": "vat-web",
+  "version": "1.0.0",
+  "description": "VAT browser client (guest only)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.7.2",
+    "streamsaver": "^2.0.6",
+    "webtorrent": "^2.1.20"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

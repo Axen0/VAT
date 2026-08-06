@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>VAT Desktop</title>
+  <link rel="stylesheet" href="styles/minimal.css">
+</head>
+<body>
+
+  <!-- HOME SCREEN -->
+  <section id="screen-home" class="screen active">
+    <div class="home-container">
+      <h2 class="home-title">VAT Desktop</h2>
+      
+      <div class="form-group">
+        <input type="text" id="nickname-input" placeholder="Ваш никнейм" class="full-width">
+        <button id="save-nickname-btn" class="full-width">Сохранить ник</button>
+      </div>
+
+      <hr class="divider">
+
+      <div id="home-actions" class="button-grid-2">
+        <button id="show-create-room-btn">Создать комнату</button>
+        <button id="btn-open-settings">Настройки</button>
+      </div>
+
+      <!-- Create Room Form (Hidden by default) -->
+      <div id="create-room-form" class="hidden-form hidden">
+        <input type="password" id="room-password" placeholder="Пароль (опционально)" class="full-width">
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="number" id="room-threshold" value="30" min="0" max="100" class="small-input"> % порог
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="room-pause-disconnect"> Пауза при откл.
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="room-host-only-control"> Только хост управляет
+          </label>
+        </div>
+        <div class="button-grid-2">
+          <button id="confirm-create-room-btn">Создать</button>
+          <button id="cancel-create-room-btn" class="danger">Отмена</button>
+        </div>
+        <div id="room-link-container" class="hidden-form hidden">
+          <input type="text" id="room-link-input" readonly class="full-width">
+          <button id="copy-link-btn" class="full-width">Копировать ссылку</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <input type="text" id="join-room-input" placeholder="Код комнаты или ссылка" class="full-width">
+        <button id="join-room-btn" class="full-width">Войти в комнату</button>
+        <input type="password" id="join-password-input" placeholder="Пароль комнаты" class="full-width hidden">
+      </div>
+
+      <div class="history-section">
+        <h3>История комнат</h3>
+        <ul id="room-history-list" class="history-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROOM SCREEN -->
+  <section id="screen-room" class="screen">
+    <div class="room-layout">
+      <div class="panel left-panel">
+        <h3>Участники</h3>
+        <div id="participants-list" class="scrollable"></div>
+      </div>
+
+      <div class="panel center-panel">
+        <div id="media-no-media-host" class="media-container hidden">
+          <div class="button-grid-2">
+            <button id="load-video-btn">Загрузить видео</button>
+            <button id="load-audio-btn">Загрузить аудио</button>
+          </div>
+        </div>
+
+        <div id="media-no-media-guest" class="media-container hidden">
+          <p>Ожидание загрузки медиа от хоста...</p>
+        </div>
+
+        <div id="media-downloading" class="media-container hidden flex-column">
+          <h3 id="downloading-filename">filename.mp4</h3>
+          <p>Прогресс: <span id="download-progress">0</span>%</p>
+          <p>Часть: <span id="download-piece">0</span> / <span id="download-total">0</span></p>
+          <p>Скорость: <span id="download-speed">0</span> MB/s | Пиры: <span id="download-peers">0</span></p>
+          <div class="progress-bar">
+            <div id="download-progress-bar" class="progress-fill"></div>
+          </div>
+          <button id="ready-to-watch-btn" disabled>Готов к просмотру</button>
+        </div>
+
+        <div id="media-player-container" class="media-container hidden">
+          <video id="main-video" class="hidden"></video>
+          <audio id="main-audio" class="hidden"></audio>
+          
+          <div class="player-controls">
+            <button id="player-play-pause" class="icon-btn">▶</button>
+            <button id="player-seek-back" class="icon-btn">-10с</button>
+            <input type="range" id="player-seek-slider" min="0" max="100" value="0" step="0.1">
+            <button id="player-seek-forward" class="icon-btn">+10с</button>
+            <input type="range" id="player-volume" min="0" max="1" value="1" step="0.1" class="volume-slider">
+            <button id="player-fullscreen" class="icon-btn">⛶</button>
+          </div>
+          <p id="sync-status" class="sync-status">Синхронизировано</p>
+        </div>
+      </div>
+
+      <div class="panel right-panel" id="chat-panel">
+        <div class="panel-header">
+          <h3>Чат</h3>
+          <button id="toggle-chat-overlay-btn" class="icon-btn small-btn">⤢</button>
+        </div>
+        <div id="chat-messages" class="scrollable"></div>
+        <div class="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Сообщение...">
+          <button id="chat-send-btn" class="icon-btn small-btn">➤</button>
+        </div>
+
+        <div id="chat-overlay" class="chat-overlay hidden">
+          <div id="chat-overlay-messages" class="scrollable"></div>
+          <div class="chat-input-area">
+            <input type="text" id="chat-overlay-input" placeholder="Сообщение...">
+            <button id="chat-overlay-send-btn" class="icon-btn small-btn">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="flex-row">
+        <button id="toggle-lan-btn">LAN режим: ВЫКЛ</button>
+        <span id="lan-ip-display" class="lan-ip"></span>
+      </div>
+      <div class="flex-row">
+        <button id="room-settings-btn">Настройки комнаты</button>
+        <button id="leave-room-btn" class="danger">Покинуть комнату</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS SCREEN -->
+  <section id="screen-settings" class="screen">
+    <div class="settings-container">
+      <h2>Настройки приложения</h2>
+      
+      <div class="settings-group">
+        <label>Тема оформления:</label>
+        <select id="setting-theme" class="full-width">
+          <option value="dark">Темная</option>
+          <option value="light">Светлая</option>
+        </select>
+      </div>
+
+      <div class="settings-group">
+        <label>Акцентный цвет:</label>
+        <div class="flex-row">
+          <input type="color" id="setting-accent-color" value="#007acc" style="width: 50px; height: 40px; padding: 0; border: none;">
+          <span id="accent-color-hex" style="margin-left: 10px; font-family: monospace;">#007acc</span>
+          <button id="apply-accent-color-btn">Применить</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="settings-group">
+        <label>Папка загрузки:</label>
+        <div class="flex-row">
+          <input type="text" id="setting-download-path" readonly class="flex-1">
+          <button id="setting-choose-path-btn">Выбрать</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <label>Порог загрузки по умолчанию (%):</label>
+        <input type="number" id="setting-default-threshold" min="0" max="100" value="30" class="full-width">
+      </div>
+
+      <div class="settings-group">
+        <label>Лимит скорости отдачи (KB/s, 0 = без лимита):</label>
+        <input type="number" id="setting-upload-limit" min="0" value="0" class="full-width">
+      </div>
+
+      <div class="settings-group">
+        <label>Лимит скорости загрузки (KB/s, 0 = без лимита):</label>
+        <input type="number" id="setting-download-limit" min="0" value="0" class="full-width">
+      </div>
+
+      <div class="button-grid-3">
+        <button id="save-settings-btn">Сохранить</button>
+        <button id="clear-history-btn" class="danger">Очистить историю</button>
+        <button id="back-to-home-btn">Назад</button>
+      </div>
+
+      <div class="history-section">
+        <h3>История загрузок</h3>
+        <table class="settings-table">
+          <thead>
+            <tr>
+              <th>Имя файла</th>
+              <th>Размер</th>
+              <th>Дата</th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody id="download-history-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODALS -->
+  <div id="alert-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="alert-modal-title">Внимание</h3>
+      <p id="alert-modal-message">Сообщение</p>
+      <div id="alert-modal-actions" class="modal-actions"></div>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Настройки комнаты</h3>
+      <div class="settings-group">
+        <label class="checkbox-label">
+          Порог загрузки (%): <input type="number" id="modal-room-threshold" min="0" max="100" value="30" class="small-input">
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="modal-room-pause-disconnect"> Пауза при отключении участника
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="modal-room-any-control"> Любой может управлять воспроизведением
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button id="save-room-settings-btn">Сохранить</button>
+        <button id="cancel-room-settings-btn" class="danger">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="toast hidden"></div>
+
+  <script type="module" src="scripts/app.js"></script>
+</body>
+</html>

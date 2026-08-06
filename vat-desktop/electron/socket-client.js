@@ -6,7 +6,10 @@ const SOCKET_EVENTS = require('../../shared/events');
 class SocketClient {
   constructor() {
     this.socket = null;
-    this.serverUrl = process.env.SIGNAL_SERVER_URL || 'http://127.0.0.1:3000';
+    // Fix: Ensure proper URL format without trailing slashes
+    let serverUrl = process.env.SIGNAL_SERVER_URL || 'http://127.0.0.1:3000';
+    serverUrl = serverUrl.replace(/\/$/, ''); // Remove trailing slash if present
+    this.serverUrl = serverUrl;
     this.currentRoomId = null;
     this.currentNickname = null;
     this.currentParticipantId = null;
@@ -26,7 +29,9 @@ class SocketClient {
       reconnectionAttempts: VAT_CONSTANTS.SIGNAL.RECONNECT_ATTEMPTS,
       reconnectionDelay: VAT_CONSTANTS.SIGNAL.RECONNECT_DELAY,
       reconnectionDelayMax: VAT_CONSTANTS.SIGNAL.RECONNECT_DELAY_MAX,
-      forceNew: true
+      forceNew: true,
+      timeout: 10000, // Connection timeout in ms
+      autoConnect: true
     });
 
     this.socket.on('connect', () => {
@@ -44,7 +49,14 @@ class SocketClient {
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error(`[SocketClient] Connection error:`, error.message);
+      console.error(`[SocketClient] Connection error:`, error.message, error.type);
+      // Notify renderer about connection failure
+      this._notifyRenderer('connection:error', { error: error.message });
+    });
+
+    this.socket.on('connect_timeout', () => {
+      console.error(`[SocketClient] Connection timeout to ${this.serverUrl}`);
+      this._notifyRenderer('connection:error', { error: 'Connection timeout. Is signal server running?' });
     });
 
     const serverEvents = Object.values(SOCKET_EVENTS.SERVER_TO_CLIENT);

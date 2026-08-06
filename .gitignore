@@ -1,4 +1,47 @@
 ```
-# Build artifacts
-vat-web/dist/
+# Electron application artifacts
+node_modules/
+dist/
+build/
+*.asar
+*.app/
+*.exe
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.msi
+*.snap
+
+# Dependencies
+.npm/
+.yarn/
+.pnp.*
+.pnp.js
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 ```

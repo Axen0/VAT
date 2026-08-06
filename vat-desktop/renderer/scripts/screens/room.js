@@ -113,11 +113,28 @@ export const RoomScreen = {
     document.getElementById('toggle-chat-overlay-btn').addEventListener('click', () => {
       window.chatComponent.toggleOverlay();
     });
+
+    // Copy room code button
+    document.getElementById('copy-room-code-btn').addEventListener('click', () => {
+      const roomCode = document.getElementById('room-code-display').textContent.replace('Код: ', '');
+      if (roomCode) {
+        navigator.clipboard.writeText(roomCode).then(() => {
+          showToast('Код комнаты скопирован');
+        }).catch(err => {
+          console.error('Failed to copy:', err);
+          showToast('Не удалось скопировать код');
+        });
+      }
+    });
   },
 
   onEnter() {
     this.updateMediaUI();
     window.chatComponent.clear();
+    // Display room code in the room screen
+    if (AppState.currentRoom) {
+      document.getElementById('room-code-display').textContent = `Код: ${AppState.currentRoom}`;
+    }
     this.progressInterval = setInterval(() => this.checkProgress(), 1000);
   },
 

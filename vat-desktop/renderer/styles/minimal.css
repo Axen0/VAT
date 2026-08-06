@@ -424,6 +424,13 @@ button.small-btn {
   color: #888;
 }
 
+.room-code {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-right: 10px;
+}
+
 .history-section {
   width: 100%;
   margin-top: 10px;

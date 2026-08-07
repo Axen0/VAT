@@ -7,22 +7,32 @@ class SocketClient {
   constructor() {
     this.socket = null;
     // Fix: Ensure proper URL format without trailing slashes
+    // Try multiple sources for the signal server URL
     let serverUrl = process.env.SIGNAL_SERVER_URL || 'http://127.0.0.1:3000';
+    
+    if (!serverUrl || serverUrl === '') {
+      serverUrl = 'http://127.0.0.1:3000';
+    }
+    
     serverUrl = serverUrl.replace(/\/$/, ''); // Remove trailing slash if present
     this.serverUrl = serverUrl;
     this.currentRoomId = null;
     this.currentNickname = null;
     this.currentParticipantId = null;
     this.currentPassword = null;
+    console.log(`[SocketClient] Signal server URL: ${this.serverUrl}`);
   }
 
   connect(nickname, participantId) {
     if (this.socket && this.socket.connected) {
+      console.log('[SocketClient] Already connected, returning existing socket');
       return this.socket;
     }
 
     this.currentNickname = nickname;
     this.currentParticipantId = participantId;
+
+    console.log(`[SocketClient] Connecting to ${this.serverUrl}...`);
 
     this.socket = io(this.serverUrl, {
       transports: ['websocket', 'polling'],

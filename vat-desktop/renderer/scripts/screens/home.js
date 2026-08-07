@@ -46,24 +46,37 @@ export const HomeScreen = {
         maxParticipants: 20
       };
 
-      const result = await IPC.createRoom({ 
-        password: document.getElementById('room-password').value || null, 
-        settings 
-      });
+      const confirmBtn = document.getElementById('confirm-create-room-btn');
+      const originalText = confirmBtn.textContent;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Создание...';
 
-      if (result.success) {
-        showToast('Комната создана');
-        AppState.currentRoom = result.roomId;
-        AppState.myRole = 'host';
-        document.getElementById('room-link-input').value = result.link || `vat://${result.roomId}`;
-        document.getElementById('room-link-container').classList.remove('hidden');
-        
-        setTimeout(() => {
-          App.showScreen('screen-room');
-          RoomScreen.onEnter();
-        }, 1000);
-      } else {
-        showToast(`Ошибка: ${result.error}`);
+      try {
+        const result = await IPC.createRoom({ 
+          password: document.getElementById('room-password').value || null, 
+          settings 
+        });
+
+        if (result.success) {
+          showToast('Комната создана');
+          AppState.currentRoom = result.roomId;
+          AppState.myRole = 'host';
+          document.getElementById('room-link-input').value = result.link || `vat://${result.roomId}`;
+          document.getElementById('room-link-container').classList.remove('hidden');
+          
+          setTimeout(() => {
+            App.showScreen('screen-room');
+            RoomScreen.onEnter();
+          }, 1000);
+        } else {
+          showToast(`Ошибка: ${result.error}`);
+        }
+      } catch (error) {
+        console.error('Create room error:', error);
+        showToast(`Ошибка: ${error.message}`);
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
       }
     });
 
@@ -85,22 +98,35 @@ export const HomeScreen = {
       const passwordInput = document.getElementById('join-password-input');
       const password = passwordInput.value.trim() || null;
       
-      const result = await IPC.joinRoom({ roomId, password });
+      const joinBtn = document.getElementById('join-room-btn');
+      const originalText = joinBtn.textContent;
+      joinBtn.disabled = true;
+      joinBtn.textContent = 'Подключение...';
       
-      if (result.success) {
-        AppState.currentRoom = roomId;
-        AppState.myRole = 'guest';
-        passwordInput.value = ''; 
-        passwordInput.classList.add('hidden');
-        App.showScreen('screen-room');
-        RoomScreen.onEnter();
-      } else {
-        if (result.error && result.error.toLowerCase().includes('password')) {
-          passwordInput.classList.remove('hidden');
-          passwordInput.focus();
+      try {
+        const result = await IPC.joinRoom({ roomId, password });
+        
+        if (result.success) {
+          AppState.currentRoom = roomId;
+          AppState.myRole = 'guest';
+          passwordInput.value = ''; 
+          passwordInput.classList.add('hidden');
+          App.showScreen('screen-room');
+          RoomScreen.onEnter();
         } else {
-          showToast(`Ошибка подключения: ${result.error}`);
+          if (result.error && result.error.toLowerCase().includes('password')) {
+            passwordInput.classList.remove('hidden');
+            passwordInput.focus();
+          } else {
+            showToast(`Ошибка подключения: ${result.error}`);
+          }
         }
+      } catch (error) {
+        console.error('Join room error:', error);
+        showToast(`Ошибка: ${error.message}`);
+      } finally {
+        joinBtn.disabled = false;
+        joinBtn.textContent = originalText;
       }
     });
 

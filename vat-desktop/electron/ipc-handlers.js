@@ -47,9 +47,36 @@ function registerIpcHandlers() {
   ipcMain.handle('room:create', async (event, { password, settings }) => {
     try {
       const account = store.get('account');
-      socketClient.connect(account.nickname, account.id);
       
+      if (!account || !account.id) {
+        console.error('[IPC] No account found, generating temporary account...');
+        const tempAccount = {
+          id: 'temp_' + Math.random().toString(36).substring(2, 15),
+          nickname: 'Guest_' + Math.random().toString(36).substring(2, 6),
+          createdAt: Date.now()
+        };
+        store.set('account', tempAccount);
+        socketClient.connect(tempAccount.nickname, tempAccount.id);
+      } else {
+        socketClient.connect(account.nickname, account.id);
+      }
+      
+      // Wait for connection before creating room
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Connection timeout')), 10000);
+        
+        const checkConnection = setInterval(() => {
+          if (socketClient.isConnected()) {
+            clearTimeout(timeout);
+            clearInterval(checkConnection);
+            resolve();
+          }
+        }, 100);
+      });
+      
+      console.log('[IPC] Creating room with settings:', settings);
       const response = await socketClient.createRoom(password, settings);
+      console.log('[IPC] Room created:', response);
       
       roomState.setRoom(response.roomId, 'host');
       syncService.startRoomSync();
@@ -63,9 +90,36 @@ function registerIpcHandlers() {
   ipcMain.handle('room:join', async (event, { roomId, password }) => {
     try {
       const account = store.get('account');
-      socketClient.connect(account.nickname, account.id);
       
+      if (!account || !account.id) {
+        console.error('[IPC] No account found, generating temporary account...');
+        const tempAccount = {
+          id: 'temp_' + Math.random().toString(36).substring(2, 15),
+          nickname: 'Guest_' + Math.random().toString(36).substring(2, 6),
+          createdAt: Date.now()
+        };
+        store.set('account', tempAccount);
+        socketClient.connect(tempAccount.nickname, tempAccount.id);
+      } else {
+        socketClient.connect(account.nickname, account.id);
+      }
+      
+      // Wait for connection before joining room
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Connection timeout')), 10000);
+        
+        const checkConnection = setInterval(() => {
+          if (socketClient.isConnected()) {
+            clearTimeout(timeout);
+            clearInterval(checkConnection);
+            resolve();
+          }
+        }, 100);
+      });
+      
+      console.log('[IPC] Joining room:', roomId);
       await socketClient.joinRoom(roomId, password);
+      console.log('[IPC] Joined room:', roomId);
       
       roomState.setRoom(roomId, 'guest');
       syncService.startRoomSync();
